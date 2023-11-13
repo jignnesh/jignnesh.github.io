@@ -116,6 +116,12 @@
                 <p style="text-align:right;font-size:small;">
                   Website built using <a href="https://github.com/jonbarron/jonbarron_website">source code</a> provided by <a href="https://jonbarron.info">Jon Barron</a>.
                 </p>
+                <div id = "result"></div>
+   <script>
+      var date = document.lastModified;
+      var lastModifiedDate = new Date(date);
+      document.getElementById("result").innerHTML = "Last modified on : " + lastModifiedDate;
+   </script>
               </td>
             </tr>
             
