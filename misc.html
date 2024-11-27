@@ -10,43 +10,25 @@
   </head>
 
   <body>
-    <table style="width:100%;border:150px;border-spacing:50px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
-      <tr style="padding:0px">
-        <td style="padding:0px">
-          <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
-            <tr style="padding:0px">
-            </td>
-            <td style="padding:2.5%;width:30%;max-width:40%;vertical-align:top">
-              <a href="index.html"><img style="width:100%;max-width:100%;object-fit: cover; border-radius: 50%;" alt="profile photo" src="images/jignesh.jpg" class="hoverZoomLink"></a>
-            </td>
-              <td style="padding:2.5%;width:70%;vertical-align:middle">
-                <p class="name" style="text-align: left;">
-                  Jignesh Patel
-                </p>
-                <p>I am currently serving as an Assistant Professor at the Indian Institute of Information Technology, Vadodara (<a href="https://iiitvadodara.ac.in/"target="_blank">IIITV</a>)- International Campus Diu (<a href="http://diu.iiitvadodara.ac.in/"target="_blank">ICD</a>). My research interests are Deep learning, Computer vision and Remote Sensing. My current work focuses on Communication, Hyperspectral imaging, using Machine learning.
-                </p>
-                <p>
-                  I received my PhD in 2022 under the guidance of <a href="https://www.daiict.ac.in/faculty-details/257"target="_blank">Prof. Manjunath V. Joshi</a> at <a href="https://www.daiict.ac.in/"target="_blank">DA-IICT</a>, Gandhinagar, India. During my time at DA-IICT, I also served as a Teaching Assistant for various undergraduate, graduate, and Ph.D. courses. Prior to that, I obtained my M.E. in 2012 from <a href="https://www.gtu.ac.in/"target="_blank">GTU</a>, Ahmedabad, India, and my B.E. in 2009 from <a href="https://www.ngu.ac.in/"target="_blank">HNGU</a>, Patan.
-                </p>
-                <p style="text-align:center">
-                  <a href="index.html">Home</a> &nbsp;/&nbsp;
-                  <a href="teaching.html">Teaaching</a> &nbsp;/&nbsp;
-                  <a href="publication.html">Publications</a>&nbsp;/&nbsp;
-                  <a href="mailto:jignesh_patel@diu.iiitvadodara.ac.in">Email</a> &nbsp;/&nbsp;
-                  <!--<a href="data/JonBarron-bio.txt">Bio</a> &nbsp;/&nbsp;-->
-                  <a href="https://scholar.google.com/citations?user=t9ILyF8AAAAJ"target="_blank">Scholar</a> 
-                </p>
-            </tr>
-          </tbody></table>
+    <!-- Include about-me.html -->
+    <div id="about-me-section"></div>
+    <script>
+      fetch('about-me.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('about-me-section').innerHTML = data;
+        })
+        .catch(error => console.error('Error loading About Me section:', error));
+    </script>
 
-          <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
+          <table style="width:80%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;"><tbody>
               <tr>
               <td style="padding:20px;width:100%;vertical-align:middle">
                 <h1>Misc</h1>
               </td>
             </tr>
           </tbody></table>          
-          <table width="100%" align="center" border="0" cellpadding="20"><tbody>
+          <table width="80%" align="center" border="0" cellpadding="20"><tbody>
             <tr>
               <td align="center" style="padding:10px;width:10%;vertical-align:top">
                 <h3>Some<br> Links</h3>
