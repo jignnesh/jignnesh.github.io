@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Jignesh Patel</title>
+    <meta name="author" content="Jignesh Patel">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="images/favicon/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="stylesheet.css">  
+  </head>
+  <body>
+    <!-- Include about-me.html -->
+    <div id="about-me-section"></div>
+    <script>
+      fetch('about-me.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('about-me-section').innerHTML = data;
+        })
+        .catch(error => console.error('Error loading About Me section:', error));
+    </script>
+
+  </body>
+</html>
