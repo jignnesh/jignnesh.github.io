@@ -123,7 +123,7 @@
 
 <div id="controls" class="panel">
   <h1>Informed Search Lab</h1>
-  <div class="sub">f(n) = &alpha;&middot;g(n) + &beta;&middot;h(n), where g is Euclidean distance to root and h is Euclidean distance to goal. Black cells are traversable.</div>
+  <div class="sub">f(n) = &alpha;&middot;g(n) + &beta;&middot;h(n) &mdash; g(n) is the real accumulated path cost from start to n (not straight-line), h(n) is Euclidean distance from n to goal. With &alpha;=&beta; (e.g. both 1) this is classic A*: since h never overestimates the true remaining distance, it's provably optimal here. &beta;=0 is uniform-cost search (Dijkstra); &alpha;=0 is pure greedy best-first, which is fast but not guaranteed optimal.</div>
 
   <div class="group">
     <label>&alpha; (weight on g) <span class="val" id="alphaVal">0.50</span></label>
@@ -552,10 +552,11 @@ function runSearchSync(grid, size, start, goal, alpha, beta){
   if(grid[startIdx]!==1 || grid[goalIdx]!==1) return {found:false, cost:Infinity, cells:new Set(), explored:0};
   const visited = new Uint8Array(size*size);
   const parent = new Int32Array(size*size).fill(-1);
+  const gScore = new Float64Array(size*size).fill(Infinity);
   const heap = new MinHeap();
-  const g0 = dist(start.x,start.y,start.x,start.y);
+  gScore[startIdx] = 0;
   const h0 = dist(start.x,start.y,goal.x,goal.y);
-  heap.push({x:start.x,y:start.y,f:alpha*g0+beta*h0});
+  heap.push({x:start.x,y:start.y,f:alpha*0+beta*h0});
   let exploredCount = 0;
   let found = false;
   while(heap.size()){
@@ -570,10 +571,14 @@ function runSearchSync(grid, size, start, goal, alpha, beta){
       if(nx<0||ny<0||nx>=size||ny>=size) continue;
       const nIdx = ny*size+nx;
       if(grid[nIdx]!==1 || visited[nIdx]) continue;
-      const g = dist(start.x,start.y,nx,ny);
-      const h = dist(nx,ny,goal.x,goal.y);
-      heap.push({x:nx,y:ny,f:alpha*g+beta*h});
-      if(parent[nIdx]===-1) parent[nIdx]=cIdx;
+      const step = (dx!==0 && dy!==0) ? Math.SQRT2 : 1;
+      const tentativeG = gScore[cIdx] + step;
+      if(tentativeG < gScore[nIdx]){
+        gScore[nIdx] = tentativeG;
+        parent[nIdx] = cIdx;
+        const h = dist(nx,ny,goal.x,goal.y);
+        heap.push({x:nx,y:ny,f:alpha*tentativeG+beta*h});
+      }
     }
   }
   if(!found) return {found:false, cost:Infinity, cells:new Set(), explored:exploredCount};
@@ -597,13 +602,14 @@ function runSearch(){
 
   const visited = new Uint8Array(SIZE*SIZE); // popped/closed
   const parent = new Int32Array(SIZE*SIZE).fill(-1);
+  const gScore = new Float64Array(SIZE*SIZE).fill(Infinity);
   const heap = new MinHeap();
   const onHeap = new Uint8Array(SIZE*SIZE);
 
   const startIdx = start.y*SIZE+start.x;
-  const g0 = dist(start.x,start.y,start.x,start.y);
+  gScore[startIdx] = 0;
   const h0 = dist(start.x,start.y,goal.x,goal.y);
-  heap.push({x:start.x, y:start.y, f: alpha*g0+beta*h0});
+  heap.push({x:start.x, y:start.y, f: alpha*0+beta*h0});
   onHeap[startIdx]=1;
   inFrontier[startIdx]=1;
 
@@ -642,13 +648,17 @@ function runSearch(){
         const nIdx = ny*SIZE+nx;
         if(grid[nIdx]!==1) continue;
         if(visited[nIdx]) continue;
-        const g = dist(start.x,start.y,nx,ny);
-        const h = dist(nx,ny,goal.x,goal.y);
-        const f = alpha*g + beta*h;
-        heap.push({x:nx,y:ny,f});
-        onHeap[nIdx]=1;
-        inFrontier[nIdx]=1;
-        if(parent[nIdx]===-1) parent[nIdx]=cIdx;
+        const step = (dx!==0 && dy!==0) ? Math.SQRT2 : 1;
+        const tentativeG = gScore[cIdx] + step;
+        if(tentativeG < gScore[nIdx]){
+          gScore[nIdx] = tentativeG;
+          parent[nIdx] = cIdx;
+          const h = dist(nx,ny,goal.x,goal.y);
+          const f = alpha*tentativeG + beta*h;
+          heap.push({x:nx,y:ny,f});
+          onHeap[nIdx]=1;
+          inFrontier[nIdx]=1;
+        }
       }
     }
     els.statExplored.textContent = String(exploredOrder.length);
