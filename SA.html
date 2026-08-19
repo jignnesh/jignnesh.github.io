@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hill Climbing vs Simulated Annealing — TSP</title>
+<style>
+  :root {
+    --bg: #0b0d10;
+    --panel: #14171c;
+    --panel-2: #171b21;
+    --border: #262b34;
+    --text: #e8eaef;
+    --muted: #838a99;
+    --muted-2: #565d6b;
+    --ls: #4fd1c5;
+    --ls-dim: rgba(79,209,197,0.18);
+    --sa-hot: #ff6b35;
+    --sa-cold: #3d8bfd;
+    --warn: #ffb648;
+    --good: #6ee787;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: radial-gradient(ellipse at top, #101318 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 28px 20px 60px;
+  }
+
+  .wrap { max-width: 1160px; margin: 0 auto; }
+
+  header { margin-bottom: 22px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-size: clamp(22px, 3.4vw, 32px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    line-height: 1.15;
+  }
+  h1 .vs { color: var(--muted-2); font-weight: 500; padding: 0 4px; }
+  h1 .ls-word { color: var(--ls); }
+  h1 .sa-word { background: linear-gradient(90deg, var(--sa-hot), var(--sa-cold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  p.sub { color: var(--muted); font-size: 14px; max-width: 640px; line-height: 1.5; margin: 0; }
+
+  /* ---- controls ---- */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 22px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 22px 0;
+  }
+  .ctrl { display: flex; flex-direction: column; gap: 6px; min-width: 160px; }
+  .ctrl label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .ctrl .val { font-family: var(--mono); color: var(--text); font-weight: 600; }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 180px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--text);
+    border: 2px solid var(--bg);
+    cursor: pointer;
+    margin-top: -5px;
+  }
+  #tempSlider { background: linear-gradient(90deg, var(--sa-cold), var(--sa-hot)); }
+
+  .btnrow { display: flex; gap: 10px; margin-left: auto; }
+  button {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.05s;
+  }
+  button:hover { border-color: var(--muted-2); }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  button.primary:hover { border-color: var(--text); opacity: 0.9; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--sa-cold); outline-offset: 2px; }
+
+  .checkline { display: flex; align-items: center; gap: 7px; }
+  .checkline label { font-size: 12px; color: var(--muted); }
+
+  .segmented {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow: hidden;
+  }
+  .seg-btn {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border: none;
+    background: var(--panel-2);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .seg-btn + .seg-btn { border-left: 1px solid var(--border); }
+  .seg-btn.active { background: var(--ls); color: #06201e; }
+  .seg-btn:hover:not(.active) { color: var(--text); }
+
+  .mode-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 8px;
+  }
+
+  /* ---- panels ---- */
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 760px) { .panels { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-title { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; }
+  .panel-title.ls { color: var(--ls); }
+  .panel-title.sa { color: var(--sa-hot); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+  .status-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .status-badge.stuck { color: var(--warn); border-color: var(--warn); }
+  .status-badge.running { color: var(--good); border-color: var(--good); }
+  .status-badge.frozen { color: var(--sa-cold); border-color: var(--sa-cold); }
+
+  canvas.tourcanvas { display: block; width: 100%; height: auto; background: #0d1015; }
+
+  .readouts {
+    display: flex;
+    gap: 22px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+  }
+  .readout .k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+  .readout .v { font-size: 17px; font-weight: 600; }
+
+  /* ---- chart ---- */
+  .chartpanel {
+    margin-top: 18px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px 10px;
+  }
+  .chart-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .chart-title { font-size: 13px; font-weight: 700; }
+  .legend { display: flex; gap: 16px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+  canvas#chart { width: 100%; height: 220px; display: block; }
+
+  footer {
+    margin-top: 22px;
+    font-size: 12px;
+    color: var(--muted-2);
+    line-height: 1.6;
+  }
+  footer b { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">TSP Lab · Module 1 · Search</div>
+    <h1><span class="ls-word">Hill Climbing</span><span class="vs">vs</span><span class="sa-word">Simulated Annealing</span></h1>
+    <p class="sub">Both start from the exact same random tour. One takes only the best move and freezes the moment nothing improves. The other tolerates a worse move now and then — the hotter it is, the more it wanders — and cools down over time.</p>
+  </header>
+
+  <div class="controls">
+    <div class="ctrl">
+      <label for="nSlider">Cities (20–250)</label>
+      <input type="range" id="nSlider" min="20" max="250" value="10" step="1">
+      <span class="val"><span id="nVal">10</span> cities</span>
+    </div>
+    <div class="ctrl">
+      <label for="tempSlider">Initial Temperature T₀</label>
+      <input type="range" id="tempSlider" min="5" max="200" value="70" step="1">
+      <span class="val"><span id="tVal">70</span> <span style="color:var(--muted-2); font-weight:400;">— applies on Reset/Run again</span></span>
+    </div>
+    <div class="ctrl">
+      <label>Hill Climbing Mode</label>
+      <div class="segmented" id="hcModeToggle">
+        <button type="button" class="seg-btn active" data-mode="steepest">Steepest descent</button>
+        <button type="button" class="seg-btn" data-mode="first">First improvement</button>
+      </div>
+    </div>
+    <div class="ctrl checkline" style="justify-content:flex-start; padding-bottom: 9px;">
+      <input type="checkbox" id="showDist" checked>
+      <label for="showDist">Show edge distances</label>
+    </div>
+    <div class="btnrow">
+      <button id="btnNew" class="primary">New problem</button>
+      <button id="btnRun">Run</button>
+      <button id="btnReset">Reset run</button>
+    </div>
+  </div>
+
+  <div class="panels">
+    <section class="panel">
+      <div class="panel-head">
+        <span class="panel-title ls"><span class="dot" style="background:var(--ls)"></span>Local Search — Hill Climbing<span class="mode-tag" id="hcModeTag">(steepest descent)</span></span>
+        <span class="status-badge" id="lsStatus">ready</span>
+      </div>
+      <canvas class="tourcanvas" id="canvasLS" width="520" height="420"></canvas>
+      <div class="readouts">
+        <div class="readout"><div class="k">Tour cost</div><div class="v" id="lsCost">—</div></div>
+        <div class="readout"><div class="k">Step</div><div class="v" id="lsIter">0</div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <span class="panel-title sa"><span class="dot" style="background:var(--sa-hot)"></span>Simulated Annealing</span>
+        <span class="status-badge" id="saStatus">ready</span>
+      </div>
+      <canvas class="tourcanvas" id="canvasSA" width="520" height="420"></canvas>
+      <div class="readouts">
+        <div class="readout"><div class="k">Tour cost</div><div class="v" id="saCost">—</div></div>
+        <div class="readout"><div class="k">Best found</div><div class="v" id="saBest">—</div></div>
+        <div class="readout"><div class="k">Temperature</div><div class="v" id="saTemp">—</div></div>
+        <div class="readout"><div class="k">Step</div><div class="v" id="saIter">0</div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="chartpanel">
+    <div class="chart-head">
+      <span class="chart-title">Objective Function over Iterations</span>
+      <span class="legend">
+        <span><span class="swatch" style="background:var(--ls)"></span>Hill Climbing</span>
+        <span><span class="swatch" style="background:linear-gradient(90deg,var(--sa-hot),var(--sa-cold))"></span>Simulated Annealing</span>
+      </span>
+    </div>
+    <canvas id="chart" width="1080" height="220"></canvas>
+  </div>
+
+  <footer>
+    <b>Reading the plot:</b> the teal line goes flat the moment hill climbing has no improving move left — that's it, permanently stuck. The SA line keeps moving after that point, occasionally ticking <i>upward</i> (a deliberately accepted worse move) while it's still hot. At the end of its schedule it reports the <b>best tour it ever visited</b>, not just wherever the random walk happened to land — watch the "Best found" readout, since that can beat the current-cost line well before the run ends.
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- DOM ----------
+  const nSlider = document.getElementById('nSlider');
+  const nVal = document.getElementById('nVal');
+  const tempSlider = document.getElementById('tempSlider');
+  const tVal = document.getElementById('tVal');
+  const showDist = document.getElementById('showDist');
+  const hcModeToggle = document.getElementById('hcModeToggle');
+  const hcModeTag = document.getElementById('hcModeTag');
+  const btnNew = document.getElementById('btnNew');
+  const btnRun = document.getElementById('btnRun');
+  const btnReset = document.getElementById('btnReset');
+
+  const canvasLS = document.getElementById('canvasLS');
+  const canvasSA = document.getElementById('canvasSA');
+  const ctxLS = canvasLS.getContext('2d');
+  const ctxSA = canvasSA.getContext('2d');
+  const chartCanvas = document.getElementById('chart');
+  const chartCtx = chartCanvas.getContext('2d');
+
+  const lsCostEl = document.getElementById('lsCost');
+  const lsIterEl = document.getElementById('lsIter');
+  const lsStatusEl = document.getElementById('lsStatus');
+  const saCostEl = document.getElementById('saCost');
+  const saBestEl = document.getElementById('saBest');
+  const saTempEl = document.getElementById('saTemp');
+  const saIterEl = document.getElementById('saIter');
+  const saStatusEl = document.getElementById('saStatus');
+
+  // ---------- geometry helpers ----------
+  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+  function tourLength(order, pts) {
+    let total = 0;
+    for (let i = 0; i < order.length; i++) {
+      total += dist(pts[order[i]], pts[order[(i + 1) % order.length]]);
+    }
+    return total;
+  }
+
+  function randomPoints(n, w, h, pad) {
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      pts.push({ x: pad + Math.random() * (w - 2 * pad), y: pad + Math.random() * (h - 2 * pad) });
+    }
+    return pts;
+  }
+
+  function randomOrder(n) {
+    const order = Array.from({ length: n }, (_, i) => i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    return order;
+  }
+
+  function reversedSegment(order, i, j) {
+    const next = order.slice();
+    let lo = i, hi = j;
+    while (lo < hi) { [next[lo], next[hi]] = [next[hi], next[lo]]; lo++; hi--; }
+    return next;
+  }
+
+  // steepest-descent 2-opt: full-neighborhood scan, take best improving move
+  function hillClimbStepSteepest(order, pts) {
+    const n = order.length;
+    const curCost = tourLength(order, pts);
+    let bestDelta = -1e-9, bestOrder = null;
+    for (let i = 0; i < n - 1; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const cand = reversedSegment(order, i, j);
+        const c = tourLength(cand, pts);
+        const delta = c - curCost;
+        if (delta < bestDelta) { bestDelta = delta; bestOrder = cand; }
+      }
+    }
+    if (bestOrder) return { order: bestOrder, cost: curCost + bestDelta, stuck: false };
+    return { order, cost: curCost, stuck: true };
+  }
+
+  // first-improvement 2-opt: scan neighbor pairs in random order, take the FIRST improving move
+  function hillClimbStepFirst(order, pts) {
+    const n = order.length;
+    const curCost = tourLength(order, pts);
+    const pairs = [];
+    for (let i = 0; i < n - 1; i++) for (let j = i + 1; j < n; j++) pairs.push([i, j]);
+    for (let k = pairs.length - 1; k > 0; k--) {
+      const r = Math.floor(Math.random() * (k + 1));
+      [pairs[k], pairs[r]] = [pairs[r], pairs[k]];
+    }
+    for (const [i, j] of pairs) {
+      const cand = reversedSegment(order, i, j);
+      const c = tourLength(cand, pts);
+      if (c - curCost < -1e-9) return { order: cand, cost: c, stuck: false };
+    }
+    return { order, cost: curCost, stuck: true };
+  }
+
+  function hillClimbStep(order, pts, mode) {
+    return mode === 'first' ? hillClimbStepFirst(order, pts) : hillClimbStepSteepest(order, pts);
+  }
+
+  function saStep(order, pts, T) {
+    const n = order.length;
+    let i = Math.floor(Math.random() * n);
+    let j = Math.floor(Math.random() * n);
+    if (i === j) j = (j + 1) % n;
+    if (i > j) { const tmp = i; i = j; j = tmp; }
+    const curCost = tourLength(order, pts);
+    const cand = reversedSegment(order, i, j);
+    const candCost = tourLength(cand, pts);
+    const delta = candCost - curCost;
+    const accept = delta < 0 || (T > 1e-9 && Math.random() < Math.exp(-delta / T));
+    return accept ? { order: cand, cost: candCost } : { order, cost: curCost };
+  }
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function hexToRgb(hex) {
+    const v = parseInt(hex.slice(1), 16);
+    return { r: (v >> 16) & 255, g: (v >> 8) & 255, b: v & 255 };
+  }
+  const HOT = hexToRgb('#ff6b35'), COLD = hexToRgb('#3d8bfd');
+  function tempColor(T, T0) {
+    const t = Math.max(0, Math.min(1, T / T0)); // 1 = hot, 0 = cold
+    const r = Math.round(lerp(COLD.r, HOT.r, t));
+    const g = Math.round(lerp(COLD.g, HOT.g, t));
+    const b = Math.round(lerp(COLD.b, HOT.b, t));
+    return `rgb(${r},${g},${b})`;
+  }
+
+  // ---------- state ----------
+  const CW = 520, CH = 420, PAD = 34;
+  const T_MIN = 0.02;
+  const TICK_MS = 45;
+  const SA_SUBSTEPS = 2;    // SA proposals per tick (HC does 1 full scan per tick)
+
+  function stepsForN(n) {
+    // more cities => bigger neighborhood => give SA a proportionally larger budget
+    return Math.max(250, Math.min(900, n * n * 2));
+  }
+
+  let S = null; // full run state, (re)built by buildProblem()
+  let hcMode = 'steepest';
+
+  function stopRun() {
+    if (S && S.timer) { clearInterval(S.timer); S.timer = null; }
+    if (S) S.running = false;
+    updateRunButton();
+  }
+
+  function updateRunButton() {
+    if (!S) return;
+    const done = S.lsStuck && S.saFrozen;
+    btnRun.textContent = S.running ? 'Pause' : (done ? 'Run again' : 'Run');
+    btnRun.disabled = false;
+  }
+
+  function tick() {
+    if (!S) return;
+    let advanced = false;
+
+    if (!S.lsStuck) {
+      const r = hillClimbStep(S.lsOrder, S.pts, hcMode);
+      S.lsOrder = r.order; S.lsCost = r.cost; S.lsStuck = r.stuck;
+      S.lsIter++;
+      advanced = true;
+    }
+
+    if (!S.saFrozen) {
+      for (let k = 0; k < SA_SUBSTEPS; k++) {
+        if (S.saIter >= S.nSteps) break;
+        const r = saStep(S.saOrder, S.pts, S.saT);
+        S.saOrder = r.order; S.saCost = r.cost;
+        if (r.cost < S.saBestCost) { S.saBestCost = r.cost; S.saBestOrder = r.order.slice(); }
+        S.saT *= S.alpha;
+        S.saIter++;
+      }
+      if (S.saIter >= S.nSteps) {
+        S.saFrozen = true; S.saT = 0;
+        // report the best tour actually seen during the run, not just wherever it ended up
+        S.saOrder = S.saBestOrder.slice(); S.saCost = S.saBestCost;
+      }
+      advanced = true;
+    }
+
+    S.history.push({ tick: S.history.length, lsCost: S.lsCost, saCost: S.saCost, saT: S.saT });
+
+    render();
+
+    if (S.lsStuck && S.saFrozen) { stopRun(); }
+    if (!advanced) { stopRun(); }
+  }
+
+  function toggleRun() {
+    if (!S) return;
+    if (S.running) { stopRun(); return; }
+    if (S.lsStuck && S.saFrozen) {
+      // "Run again" replays the same cities/initial tour, picking up the current T0 slider
+      const pts = S.pts, initOrder = S.initOrder;
+      const T0 = parseFloat(tempSlider.value);
+      const nSteps = stepsForN(S.n);
+      const alpha = Math.pow(T_MIN / T0, 1 / nSteps);
+      const initCost = tourLength(initOrder, pts);
+      S.T0 = T0; S.alpha = alpha; S.nSteps = nSteps;
+      S.lsOrder = initOrder.slice(); S.lsCost = initCost; S.lsStuck = false; S.lsIter = 0;
+      S.saOrder = initOrder.slice(); S.saCost = initCost; S.saT = T0; S.saIter = 0; S.saFrozen = false;
+      S.saBestOrder = initOrder.slice(); S.saBestCost = initCost;
+      S.history = [{ tick: 0, lsCost: initCost, saCost: initCost, saT: T0 }];
+    }
+    S.running = true;
+    updateRunButton();
+    S.timer = setInterval(tick, TICK_MS);
+  }
+
+  // ---------- drawing ----------
+  function drawTour(ctx, order, pts, color, opts) {
+    opts = opts || {};
+    ctx.clearRect(0, 0, CW, CH);
+
+    // edges
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    for (let i = 0; i < order.length; i++) {
+      const a = pts[order[i]], b = pts[order[(i + 1) % order.length]];
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+    }
+    ctx.stroke();
+
+    // edge distance labels
+    if (opts.showDist) {
+      ctx.font = '9px ui-monospace, monospace';
+      ctx.fillStyle = 'rgba(232,234,239,0.55)';
+      ctx.textAlign = 'center';
+      for (let i = 0; i < order.length; i++) {
+        const a = pts[order[i]], b = pts[order[(i + 1) % order.length]];
+        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        const d = dist(a, b).toFixed(0);
+        const w = ctx.measureText(d).width;
+        ctx.fillStyle = 'rgba(13,16,21,0.72)';
+        ctx.fillRect(mx - w / 2 - 2, my - 8, w + 4, 11);
+        ctx.fillStyle = 'rgba(232,234,239,0.65)';
+        ctx.fillText(d, mx, my + 1);
+      }
+    }
+
+    // cities
+    pts.forEach((p, idx) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#0d1015';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+      ctx.font = 'bold 9px ui-monospace, monospace';
+      ctx.fillStyle = '#e8eaef';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(idx + 1), p.x, p.y + 3);
+    });
+  }
+
+  function drawChart() {
+    const w = chartCanvas.width, h = chartCanvas.height;
+    chartCtx.clearRect(0, 0, w, h);
+    if (!S || S.history.length < 1) return;
+
+    const padL = 46, padR = 14, padT = 12, padB = 22;
+    const plotW = w - padL - padR, plotH = h - padT - padB;
+
+    const allCosts = S.history.flatMap(p => [p.lsCost, p.saCost]);
+    let maxC = Math.max(...allCosts) * 1.08;
+    let minC = 0;
+    const maxTick = Math.max(1, S.history.length - 1);
+
+    function X(tick) { return padL + (tick / maxTick) * plotW; }
+    function Y(cost) { return padT + plotH - ((cost - minC) / (maxC - minC || 1)) * plotH; }
+
+    // gridlines
+    chartCtx.strokeStyle = '#1c212b';
+    chartCtx.lineWidth = 1;
+    chartCtx.font = '10px ui-monospace, monospace';
+    chartCtx.fillStyle = '#565d6b';
+    const gridLines = 4;
+    for (let i = 0; i <= gridLines; i++) {
+      const cy = padT + (plotH / gridLines) * i;
+      chartCtx.beginPath();
+      chartCtx.moveTo(padL, cy);
+      chartCtx.lineTo(w - padR, cy);
+      chartCtx.stroke();
+      const val = maxC - (maxC / gridLines) * i;
+      chartCtx.fillText(val.toFixed(0), 4, cy + 3);
+    }
+
+    // LS line
+    chartCtx.beginPath();
+    chartCtx.strokeStyle = '#4fd1c5';
+    chartCtx.lineWidth = 2;
+    S.history.forEach((p, i) => {
+      const x = X(p.tick), y = Y(p.lsCost);
+      if (i === 0) chartCtx.moveTo(x, y); else chartCtx.lineTo(x, y);
+    });
+    chartCtx.stroke();
+
+    // SA line (segment-colored by temperature)
+    chartCtx.lineWidth = 2;
+    for (let i = 1; i < S.history.length; i++) {
+      const p0 = S.history[i - 1], p1 = S.history[i];
+      chartCtx.beginPath();
+      chartCtx.strokeStyle = tempColor(p1.saT, S.T0);
+      chartCtx.moveTo(X(p0.tick), Y(p0.saCost));
+      chartCtx.lineTo(X(p1.tick), Y(p1.saCost));
+      chartCtx.stroke();
+    }
+
+    // markers: current state
+    const lastLS = S.history[S.history.length - 1];
+    const lastSA = S.history[S.history.length - 1];
+
+    chartCtx.beginPath();
+    chartCtx.arc(X(lastLS.tick), Y(lastLS.lsCost), 5, 0, Math.PI * 2);
+    chartCtx.fillStyle = '#4fd1c5';
+    chartCtx.fill();
+    chartCtx.strokeStyle = '#0b0d10'; chartCtx.lineWidth = 2; chartCtx.stroke();
+
+    chartCtx.beginPath();
+    chartCtx.arc(X(lastSA.tick), Y(lastSA.saCost), 5, 0, Math.PI * 2);
+    chartCtx.fillStyle = tempColor(lastSA.saT, S.T0);
+    chartCtx.fill();
+    chartCtx.strokeStyle = '#0b0d10'; chartCtx.lineWidth = 2; chartCtx.stroke();
+
+    // initial-state marker (both start together)
+    const first = S.history[0];
+    chartCtx.beginPath();
+    chartCtx.arc(X(first.tick), Y(first.lsCost), 4, 0, Math.PI * 2);
+    chartCtx.fillStyle = '#e8eaef';
+    chartCtx.fill();
+  }
+
+  function render() {
+    if (!S) return;
+    drawTour(ctxLS, S.lsOrder, S.pts, getComputedStyle(document.documentElement).getPropertyValue('--ls').trim() || '#4fd1c5', { showDist: showDist.checked });
+    drawTour(ctxSA, S.saOrder, S.pts, tempColor(S.saT, S.T0), { showDist: showDist.checked });
+
+    lsCostEl.textContent = S.lsCost.toFixed(1);
+    lsIterEl.textContent = S.lsIter;
+    lsStatusEl.textContent = S.lsStuck ? 'stuck' : (S.running ? 'improving' : 'ready');
+    lsStatusEl.className = 'status-badge' + (S.lsStuck ? ' stuck' : (S.running ? ' running' : ''));
+
+    saCostEl.textContent = S.saCost.toFixed(1);
+    saBestEl.textContent = S.saBestCost.toFixed(1);
+    saTempEl.textContent = S.saFrozen ? '0.0' : S.saT.toFixed(1);
+    saIterEl.textContent = S.saIter;
+    saStatusEl.textContent = S.saFrozen ? 'frozen' : (S.running ? 'exploring' : 'ready');
+    saStatusEl.className = 'status-badge' + (S.saFrozen ? ' frozen' : (S.running ? ' running' : ''));
+
+    drawChart();
+    updateRunButton();
+  }
+
+  // ---------- wire up controls ----------
+  nSlider.addEventListener('input', () => { nVal.textContent = nSlider.value; });
+  tempSlider.addEventListener('input', () => { tVal.textContent = tempSlider.value; });
+  showDist.addEventListener('change', render);
+
+  hcModeToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.seg-btn');
+    if (!btn) return;
+    const mode = btn.dataset.mode;
+    if (mode === hcMode) return;
+    hcMode = mode;
+    hcModeToggle.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b === btn));
+    hcModeTag.textContent = mode === 'first' ? '(first improvement)' : '(steepest descent)';
+    if (S) {
+      S.lsStuck = false; // switching rules means it's worth re-checking for a move
+      lsStatusEl.textContent = S.running ? 'improving' : 'ready';
+      lsStatusEl.className = 'status-badge' + (S.running ? ' running' : '');
+    }
+  });
+
+  btnNew.addEventListener('click', () => {
+    stopRun();
+    buildProblem();
+  });
+
+  btnRun.addEventListener('click', toggleRun);
+
+  btnReset.addEventListener('click', () => {
+    if (!S) return;
+    stopRun();
+    const { pts, initOrder } = S;
+    const T0 = parseFloat(tempSlider.value);           // pick up current slider value
+    const nSteps = stepsForN(S.n);
+    const alpha = Math.pow(T_MIN / T0, 1 / nSteps);
+    const order = initOrder.slice();
+    const cost = tourLength(order, pts);
+    S.T0 = T0; S.alpha = alpha; S.nSteps = nSteps;
+    S.lsOrder = order.slice(); S.lsCost = cost; S.lsStuck = false; S.lsIter = 0;
+    S.saOrder = order.slice(); S.saCost = cost; S.saT = T0; S.saIter = 0; S.saFrozen = false;
+    S.saBestOrder = order.slice(); S.saBestCost = cost;
+    S.history = [{ tick: 0, lsCost: cost, saCost: cost, saT: T0 }];
+    render();
+  });
+
+  function buildProblem() {
+    const n = parseInt(nSlider.value, 10);
+    const T0 = parseFloat(tempSlider.value);
+    const pts = randomPoints(n, CW, CH, PAD);
+    const initOrder = randomOrder(n);
+    const initCost = tourLength(initOrder, pts);
+    const nSteps = stepsForN(n);
+    const alpha = Math.pow(T_MIN / T0, 1 / nSteps);
+
+    S = {
+      pts, n, T0, alpha, nSteps, initOrder: initOrder.slice(),
+      lsOrder: initOrder.slice(), lsCost: initCost, lsStuck: false, lsIter: 0,
+      saOrder: initOrder.slice(), saCost: initCost, saT: T0, saIter: 0, saFrozen: false,
+      saBestOrder: initOrder.slice(), saBestCost: initCost,
+      history: [{ tick: 0, lsCost: initCost, saCost: initCost, saT: T0 }],
+      running: false, timer: null,
+    };
+    render();
+  }
+
+  // init
+  buildProblem();
+})();
+</script>
+</body>
+</html>
