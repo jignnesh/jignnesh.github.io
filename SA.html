@@ -448,7 +448,7 @@
 
   function stepsForN(n) {
     // more cities => bigger neighborhood => give SA a proportionally larger budget
-    return Math.max(250, Math.min(900, n * n * 2));
+    return Math.max(250, Math.min(10000, n * n * 2));
   }
 
   let S = null; // full run state, (re)built by buildProblem()
