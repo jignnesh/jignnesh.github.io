@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NPS Decision Helper: Age 38 to 65</title>
+<style>
+:root{--bg:#f6f8fb;--card:#fff;--ink:#1f2a37;--mut:#5d6b7b;--line:#d5dee8;--navy:#1b3a57;--blue:#2e6f9e;--teal:#2a8c82;--green:#3d8b5a;--amber:#b87a12;--amber-bg:#fdf1dc;--red:#b3402f;--red-bg:#fbe9e6;--grn-bg:#e5f3ea;--blu-bg:#e6f0f8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10171f;--card:#18222d;--ink:#e6edf4;--mut:#93a3b5;--line:#2c3a49;--navy:#8fb8dc;--blue:#6fa8d4;--teal:#52bdb0;--green:#68c48a;--amber:#e3b04f;--amber-bg:#3a2e16;--red:#ef8a79;--red-bg:#3c1f1a;--grn-bg:#183324;--blu-bg:#17283a}}
+:root[data-theme="dark"]{--bg:#10171f;--card:#18222d;--ink:#e6edf4;--mut:#93a3b5;--line:#2c3a49;--navy:#8fb8dc;--blue:#6fa8d4;--teal:#52bdb0;--green:#68c48a;--amber:#e3b04f;--amber-bg:#3a2e16;--red:#ef8a79;--red-bg:#3c1f1a;--grn-bg:#183324;--blu-bg:#17283a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:18px 14px 40px}
+h1{font-size:22px;color:var(--navy);margin:4px 0 2px}
+.sub{color:var(--mut);font-size:13px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 12px}
+label{display:block;font-size:12.5px;color:var(--mut);font-weight:600}
+input,select{width:100%;margin-top:4px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.hint{font-size:12px;color:var(--mut);margin:8px 0 0}
+.hint a{color:var(--blue)}
+.chk{display:flex;gap:8px;align-items:flex-start;font-weight:500;color:var(--ink);font-size:13.5px}
+.chk input{width:auto;margin-top:3px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:6px 7px;text-align:center}
+.tbl th{background:var(--navy);color:var(--bg);font-size:12px}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.scroll{overflow-x:auto}
+button{background:var(--navy);color:var(--bg);border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer;width:100%}
+button.sec{background:transparent;color:var(--blue);border:1px solid var(--line);width:auto;padding:8px 12px;font-weight:600}
+.dec{border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid var(--line)}
+.dec .tag{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.dec .big{font-size:19px;font-weight:800;margin:3px 0 6px}
+.dec.go{background:var(--grn-bg)}.dec.go .tag,.dec.go .big{color:var(--green)}
+.dec.stay{background:var(--blu-bg)}.dec.stay .tag,.dec.stay .big{color:var(--blue)}
+.dec.wait{background:var(--amber-bg)}.dec.wait .tag,.dec.wait .big{color:var(--amber)}
+.dec.stop{background:var(--red-bg)}.dec.stop .tag,.dec.stop .big{color:var(--red)}
+.trace{list-style:none;margin:8px 0 0;padding:0;font-size:13.5px}
+.trace li{padding:5px 0 5px 24px;position:relative;border-top:1px dashed var(--line)}
+.trace li:first-child{border-top:0}
+.trace li:before{content:"";position:absolute;left:2px;top:9px;width:12px;height:12px;border-radius:50%;background:var(--mut)}
+.trace li.ok:before{background:var(--green)}.trace li.no:before{background:var(--red)}.trace li.nt:before{background:var(--amber)}
+.note{font-size:12px;color:var(--mut)}
+.pill{display:inline-block;background:var(--blu-bg);color:var(--blue);border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;margin:2px 4px 2px 0}
+.rules li{margin:3px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>NPS Decision Helper</h1>
+<div class="sub">Plan change and PFM change decisions, using the rules in the merged strategy PDF (age 38 to 65). Analysis, not personalised financial advice.</div>
+
+<div class="card">
+<h2>1. About you and your plan</h2>
+<div class="grid">
+<label>Your age now<input id="age" type="number" min="25" max="70" value="38"></label>
+<label>Planned exit age<input id="ret" type="number" min="55" max="75" value="65"></label>
+<label>Current plan
+<select id="plan">
+<option value="none">Not chosen yet / default</option>
+<option value="lc75" selected>Auto Choice LC75 High</option>
+<option value="agg">Auto Choice Aggressive (35E/55Y)</option>
+<option value="lc50">Auto Choice LC50</option>
+<option value="lc25">Auto Choice LC25</option>
+<option value="active">Active Choice</option>
+</select></label>
+<label>Still comfortable with this plan's risk?
+<select id="comfy"><option value="yes">Yes</option><option value="no">No</option></select></label>
+<label>What is prompting you to look at a change?
+<select id="reason">
+<option value="routine">Routine yearly review (Sept/Oct)</option>
+<option value="age">Age milestone (42, 50, 55, 60)</option>
+<option value="situation">Real change in my risk capacity or situation</option>
+<option value="market">Recent market rally or 1-year returns</option>
+<option value="fall">Market fell 20% or more recently</option>
+</select></label>
+<label>Plan changes already used this financial year
+<select id="used"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+</div>
+<div class="scroll"><table class="tbl" id="eqtbl"></table></div>
+<p class="hint">Equity shares come from the PFRDA tables (yearly values between published anchors are interpolated). Confirm the age table in your NPS app.</p>
+</div>
+
+<div class="card">
+<h2>2. PFM data (enter from NPS Trust)</h2>
+<p class="hint" style="margin-top:0">A published page cannot call npstrust.org.in, so open it, copy the figures for <b>your plan's E, C and G mix</b>, and type them here: <a href="https://npstrust.org.in/weekly-snapshot-nps-schemes" target="_blank" rel="noopener">NPS Trust scheme performance</a>.</p>
+<div class="grid" style="margin-top:10px">
+<label>Current PFM
+<select id="pfm"><option value="none">Not chosen yet</option></select></label>
+<label>Challenger PFM (optional)
+<select id="chal"><option value="none">None</option></select></label>
+<label>Current PFM rank on 5Y (1 = best of 10)<input id="r5" type="number" min="1" max="10" placeholder="e.g. 3"></label>
+<label>Current PFM rank on 10Y (1 = best of 10)<input id="r10" type="number" min="1" max="10" placeholder="e.g. 3"></label>
+<label>Current PFM Scheme E 3Y return (% a year)<input id="e3" type="number" step="0.01" placeholder="e.g. 14.2"></label>
+<label>Nifty 50 TRI 3Y return (% a year)<input id="n3" type="number" step="0.01" placeholder="e.g. 15.0"></label>
+<label>Years in a row in bottom half (5Y and 10Y)
+<select id="yrs"><option value="0">0 (not in bottom half)</option><option value="1">1</option><option value="2">2 or more</option></select></label>
+</div>
+<div id="chalbox" style="display:none">
+<h2 style="margin-top:14px">Current vs challenger (on your plan's E/C/G mix, % a year)</h2>
+<div class="scroll"><table class="tbl">
+<tr><th></th><th>3Y</th><th>5Y</th><th>10Y</th><th>Years of NPS history</th></tr>
+<tr><td>Current PFM</td><td><input id="c3" type="number" step="0.01"></td><td><input id="c5" type="number" step="0.01"></td><td><input id="c10" type="number" step="0.01"></td><td>-</td></tr>
+<tr><td>Challenger</td><td><input id="h3" type="number" step="0.01"></td><td><input id="h5" type="number" step="0.01"></td><td><input id="h10" type="number" step="0.01"></td><td><input id="hy" type="number" min="0" max="30"></td></tr>
+</table></div>
+<div style="margin-top:8px;display:grid;gap:6px">
+<label class="chk"><input type="checkbox" id="dd"> Challenger's falls in 2020 and 2022 were similar to or smaller than current PFM's</label>
+<label class="chk"><input type="checkbox" id="flag"> Challenger has a red flag (manager exit, ownership change, regulatory action) or a weak E, C or G scheme</label>
+</div>
+</div>
+<div style="margin-top:10px;display:grid;gap:6px">
+<label class="chk"><input type="checkbox" id="usedpfm"> I have already used my one PFM change this financial year</label>
+<label class="chk"><input type="checkbox" id="recent"> I changed PFM less than 12 months ago</label>
+</div>
+</div>
+
+<button id="go">Get my decisions</button>
+<div id="out" style="margin-top:14px"></div>
+
+<div class="card">
+<h2>Rules built into this page</h2>
+<ul class="rules" style="margin:0;padding-left:18px;font-size:13.5px">
+<li>Never change plan or PFM because of one bad year or a market rally; judge PFMs on 3Y, 5Y and 10Y.</li>
+<li>After a fall of 20% or more, do nothing for 30 days and write down your reasoning first.</li>
+<li>Plan: LC75 High until Aggressive holds equal or more equity (age 42), then Aggressive to exit; check at 50, 55, 60 and 65.</li>
+<li>PFM: act only if bottom half on both 5Y and 10Y and behind Nifty 50 TRI for two years, and a challenger passes every switch test (5Y +0.50 pp, 3Y +0.25 pp, 10Y not more than 0.25 pp lower, 5+ years of history, no red flag).</li>
+<li>Limits: up to 4 plan changes and 1 PFM change per financial year (confirm in your NPS app).</li>
+</ul>
+</div>
+</div>
+
+<script>
+var L75={35:75,36:71,37:67,38:63,39:59,40:55,41:51,42:47,43:43,44:39,45:35,46:32,47:29,48:26,49:23,50:20,51:19,52:18,53:17,54:16};
+var AG={46:[48,28,24],47:[46,26,28],48:[44,24,32],49:[42,22,36],50:[40,20,40],51:[39,18,43],52:[38,16,46],53:[37,14,49],54:[36,12,52]};
+function lc75(a){return a<=35?75:a>=55?15:L75[a]}
+function agg(a){return a<=45?[50,30,20]:a>=55?[35,10,55]:AG[a]}
+function lc50(a){return a<=35?50:a>=55?10:50-2*(a-35)}
+function lc25(a){return a<=35?25:a>=55?5:25-(a-35)}
+function act(a){return a<=50?75:Math.max(50,75-2.5*(a-50))}
+var NAMES={lc75:"LC75 High",agg:"Aggressive (35E/55Y)",lc50:"LC50",lc25:"LC25",active:"Active Choice",none:"default"};
+var EQ={lc75:lc75,agg:function(a){return agg(a)[0]},lc50:lc50,lc25:lc25,active:act};
+function crossover(){for(var a=38;a<=60;a++){if(agg(a)[0]>=lc75(a))return a}return 42}
+var PFMS=["Aditya Birla Sun Life","Axis","DSP","HDFC","ICICI Prudential","Kotak","LIC","SBI","Tata","UTI"];
+function $(i){return document.getElementById(i)}
+PFMS.forEach(function(n){["pfm","chal"].forEach(function(id){var o=document.createElement("option");o.value=n;o.textContent=n;$(id).appendChild(o)})});
+function num(id){var v=$(id).value;return v===""?null:parseFloat(v)}
+function fmt(x){return (Math.round(x*10)/10).toString()}
+
+function drawEq(){
+ var a=parseInt($("age").value)||38,rows="<tr><th>Equity % at</th><th>Age "+a+"</th><th>Age 42</th><th>Age 50</th><th>Age 55+</th></tr>";
+ ["lc75","agg","lc50","lc25","active"].forEach(function(k){
+  rows+="<tr><td>"+NAMES[k]+"</td>"+[a,42,50,55].map(function(x){return "<td>"+fmt(EQ[k](x))+"</td>"}).join("")+"</tr>"});
+ $("eqtbl").innerHTML=rows;
+}
+$("age").addEventListener("input",drawEq);drawEq();
+$("chal").addEventListener("change",function(){$("chalbox").style.display=this.value==="none"?"none":"block"});
+
+function planDecision(){
+ var age=parseInt($("age").value),ret=parseInt($("ret").value)||65,plan=$("plan").value,comfy=$("comfy").value,
+ reason=$("reason").value,used=parseInt($("used").value),cx=crossover(),t=[],d={cls:"stay",big:"",why:""};
+ function T(s,txt){t.push({s:s,t:txt})}
+ if(!age||age<18){return{cls:"stop",tag:"Plan decision",big:"Enter a valid age",why:"",trace:[]}}
+ var eqNow=plan==="none"?null:EQ[plan](age);
+ T("ok","Age "+age+", "+(ret-age)+" years to exit at "+ret+(eqNow!==null?". "+NAMES[plan]+" holds about "+fmt(eqNow)+"% equity today.":"."));
+ var base=null;
+ if(age>=ret){base={cls:"go",big:"Exit stage: choose annuity share and lump sum",why:"You have reached your planned exit age. Confirm the current minimum annuity split and any option to defer with your department."};T("ok","Exit age reached.")}
+ else if(plan==="none"){
+  if(age<cx){base={cls:"go",big:"Choose Auto Choice LC75 High",why:"Under age "+cx+", LC75 High holds more equity than Aggressive ("+lc75(age)+"% vs "+agg(age)[0]+"%). Switch to Aggressive at age "+cx+"."}}
+  else{base={cls:"go",big:"Choose Auto Choice Aggressive (35E/55Y)",why:"From age "+cx+", Aggressive holds equal or more equity than LC75 High ("+agg(age)[0]+"% vs "+lc75(age)+"%) and never falls below 35% equity."}}
+  T("ok","No plan chosen yet, so pick the path plan for your age.");
+ } else if(comfy==="no"){
+  var mv={lc75:"Aggressive or LC50",agg:"LC50",lc50:"LC25",lc25:null,active:"a lower Active Choice equity share, or Aggressive"}[plan];
+  if(mv){base={cls:"go",big:"Move to "+mv,why:"You are no longer comfortable with the risk. Check the equity share of the new plan at age "+age+" in your app first, then return to the yearly review."}}
+  else{base={cls:"stay",big:"Stay in LC25",why:"LC25 is the lowest-risk lifecycle plan. Revisit if your comfort changes."}}
+  T("no","Not comfortable with current risk level.");
+ } else {
+  T("ok","Comfortable with current risk level.");
+  if(plan==="lc75"){
+   if(age>=cx){base={cls:"go",big:"Switch to Aggressive (35E/55Y)",why:"Aggressive now holds "+agg(age)[0]+"% equity vs "+lc75(age)+"% in LC75 High, and stays at 35% or more to exit while LC75 High falls to 15%. Check the age table in your app, then switch."};T("ok","Age "+age+" is at or past the crossover age "+cx+".")}
+   else{base={cls:"stay",big:"Stay in LC75 High",why:"LC75 High still holds more equity than Aggressive ("+lc75(age)+"% vs "+agg(age)[0]+"%). Crossover is at age "+cx+", in "+(cx-age)+" year"+(cx-age===1?"":"s")+"."};T("nt","Not yet at crossover age "+cx+".")}
+  } else if(plan==="agg"){
+   if(age>=60){base={cls:"stay",big:"Stay in Aggressive; plan your exit",why:"Floor allocation 35E/10C/55G is held to exit. Compare annuity providers and review exit options."}}
+   else if(age>=55){base={cls:"stay",big:"Stay in Aggressive (floor reached)",why:"35% equity, 10% corporate bonds, 55% government securities, held until exit. At 55 confirm your retirement date and annuity plan."}}
+   else if(age>=50&&age<=51){base={cls:"stay",big:"Age-50 check: stay in Aggressive unless you want less risk",why:"Aggressive holds "+agg(age)[0]+"% equity now. Confirm you still want it for the final stretch; if not, answer 'No' above to see the lower-risk move."}}
+   else{base={cls:"stay",big:"Stay in Aggressive",why:"No plan change is needed. Next checkpoints: age 50, 55, 60, 65."}}
+   T("ok","On the path plan for your age.");
+  } else if(plan==="lc50"||plan==="lc25"){
+   base={cls:"wait",big:"Consider moving to the path plan",why:NAMES[plan]+" holds "+fmt(EQ[plan](age))+"% equity at your age vs "+fmt(agg(age)[0])+"% in Aggressive. The strategy path is "+(age<cx?"LC75 High now, Aggressive from "+cx:"Aggressive")+" if you want more growth and are comfortable with the extra risk."};
+   T("nt",NAMES[plan]+" is not on the strategy path.");
+  } else {
+   base={cls:"stay",big:"Stay in Active Choice (manual)",why:"Active Choice allows up to 75% equity until age 50, then the cap falls 2.5 points a year to 50% at 60. You must rebalance yourself, and it is not the default in this strategy. Confirm it is open to your account type."};
+   T("nt","Active Choice is an optional manual route.");
+  }
+ }
+ var isSwitch=base&&base.cls==="go"&&age<ret;
+ if(reason==="fall"){
+  T("no","Market fell 20% or more: rule says do nothing for 30 days.");
+  d={cls:"wait",big:"Wait 30 days, then decide",why:"Write down what you feel and why before touching anything. Afterwards the age rule says: "+base.big+".",trace:t};
+ } else if(reason==="market"&&isSwitch&&plan!=="none"&&!(plan==="lc75"&&age>=cx)){
+  T("no","Reason is a market move or 1-year returns, which is not a valid reason to change plan.");
+  d={cls:"stay",big:"Do not switch now",why:"A rally or one year's returns is not a trigger. Re-run this check with the real reason (age milestone or change in your situation). The age rule alone would say: "+base.big+".",trace:t};
+ } else if(isSwitch&&used>=4&&plan!=="none"){
+  T("no","All 4 plan changes for this financial year are used.");
+  d={cls:"wait",big:"Wait until 1 April",why:"No plan changes are left this financial year. Planned action: "+base.big+".",trace:t};
+ } else {
+  if(isSwitch&&plan!=="none")T("ok",(4-used)+" plan change"+(4-used===1?"":"s")+" left this financial year.");
+  d={cls:base.cls,big:base.big,why:base.why,trace:t};
+ }
+ d.tag="Decision 1: Plan (scheme)";return d;
+}
+
+function pfmDecision(){
+ var t=[],pfm=$("pfm").value,chal=$("chal").value;
+ function T(s,x){t.push({s:s,t:x})}
+ function R(cls,big,why){return{cls:cls,tag:"Decision 2: PFM",big:big,why:why,trace:t}}
+ if(pfm==="none"){
+  T("nt","No current PFM chosen.");
+  return R("go","Pick the top performer on 10Y and 5Y","Shortlist PFMs with 10+ years of NPS history, rank them by 10Y and 5Y returns on your plan's E, C and G mix, and pick the leader. Verify the current leaders on NPS Trust before choosing; then hold and review yearly.");
+ }
+ var r5=num("r5"),r10=num("r10"),e3=num("e3"),n3=num("n3"),yrs=parseInt($("yrs").value);
+ if($("recent").checked){T("no","PFM changed less than 12 months ago.");return R("wait","Hold: wait a year before judging "+pfm,"The strategy says to give a new PFM a full year before judging it. Review again at the next September/October check.")}
+ if(r5===null||r10===null||e3===null||n3===null){T("nt","Performance data not entered yet.");return R("wait","Enter the PFM data to get a decision","Fill in ranks on 5Y and 10Y, Scheme E 3Y return and Nifty 50 TRI 3Y return. Default posture until then: keep "+pfm+".")}
+ var bottom=r5>=6&&r10>=6,behind=e3<n3;
+ T(bottom?"no":"ok","Rank "+r5+" on 5Y and "+r10+" on 10Y of 10: "+(bottom?"bottom half on both.":"not in the bottom half on both."));
+ T(behind?"no":"ok","Scheme E 3Y "+e3+"% vs Nifty 50 TRI "+n3+"%: "+(behind?"behind benchmark.":"matching or beating benchmark."));
+ if(!(bottom&&behind)){return R("stay","Keep "+pfm,"The underperformance test is not met. Do not abandon a sound manager over one weak period, and do not chase 1-year winners. Review again in September/October.")}
+ if(yrs<2){T("nt","Second year in a row not yet reached ("+yrs+" so far).");return R("wait","Put "+pfm+" on watch","Underperformance has not persisted for two years. Review again next year before considering a change.")}
+ T("no","Underperformance for two years in a row.");
+ if($("usedpfm").checked){T("no","The one PFM change this financial year is already used.");return R("wait","Wait until 1 April to change PFM","You qualify for a review, but no PFM change is left this financial year.")}
+ if(chal==="none"){T("nt","No challenger entered.");return R("wait","Underperformance confirmed: pick a challenger","Enter a challenger PFM and its 3Y, 5Y and 10Y figures on your plan's mix to run the switch tests.")}
+ var c3=num("c3"),c5=num("c5"),c10=num("c10"),h3=num("h3"),h5=num("h5"),h10=num("h10"),hy=num("hy");
+ if([c3,c5,h3,h5,hy].some(function(v){return v===null})){T("nt","Challenger comparison data incomplete.");return R("wait","Complete the comparison table","The 3Y, 5Y and history fields are needed for the switch tests (10Y is checked when both are entered).")}
+ var fails=[];
+ function K(ok,txt){T(ok?"ok":"no",txt);if(!ok)fails.push(txt)}
+ K(hy>=5,"Challenger has "+hy+" years of history (needs 5 or more)");
+ K(h5-c5>=0.5,"5Y advantage "+fmt(h5-c5)+" pp a year (needs 0.50 or more)");
+ K(h3-c3>=0.25,"3Y advantage "+fmt(h3-c3)+" pp a year (needs 0.25 or more)");
+ if(c10!==null&&h10!==null)K(h10-c10>=-0.25,"10Y difference "+fmt(h10-c10)+" pp a year (not more than 0.25 lower)");
+ K($("dd").checked,"Falls in 2020 and 2022 similar or smaller");
+ K(!$("flag").checked,"No red flag or weak E, C or G scheme");
+ if(fails.length===0)return R("go","Change PFM to "+chal,"All switch tests pass. Use your one PFM change this financial year, verify the change in the NPS app, log the date and reason, and do not judge the new PFM for a year.");
+ return R("stay","Keep "+pfm+" (challenger fails "+fails.length+" test"+(fails.length>1?"s":"")+")","A challenger must pass every test. Failed: "+fails.join("; ")+".");
+}
+
+function render(d){
+ var h='<div class="dec '+d.cls+'"><div class="tag">'+d.tag+'</div><div class="big">'+d.big+'</div><div>'+d.why+'</div>';
+ if(d.trace&&d.trace.length){h+='<ul class="trace">'+d.trace.map(function(x){return '<li class="'+x.s+'">'+x.t+'</li>'}).join("")+'</ul>'}
+ return h+'</div>';
+}
+$("go").addEventListener("click",function(){
+ var out=$("out");out.innerHTML=render(planDecision())+render(pfmDecision())+
+ '<div class="note">Log both decisions with the date, the reason and how you felt (see the decision log in the PDF). Analysis, not personalised financial advice; confirm plan names, limits and exit rules in your NPS app.</div>';
+ out.scrollIntoView({behavior:"smooth",block:"start"});
+});
+</script>
+</body>
+</html>
